@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+  namenode:
+    image: mon_hadoop
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - "9870:9870" # Web interface du NameNode
+      - "8088:8088" # Web interface du ResourceManager
+      - "8020:8020" # Port de communication avec le NameNode
+    volumes:
+      - hadoop_namenode:/usr/local/hadoop/hdfs/namenode
+    networks:
+      - hadoop_network
+    command: "/bin/bash -c '/usr/local/bin/start-hadoop.sh && tail -f /dev/null'"
+
+  datanode1:
+    image: mon_hadoop
+    container_name: datanode1
+    hostname: datanode1
+    ports:
+      - "9864:9864" # Web interface du DataNode
+      - "9866:9866" # Port de communication avec le DataNode
+    volumes:
+      - hadoop_datanode1:/usr/local/hadoop/hdfs/datanode
+    depends_on:
+      - namenode
+    networks:
+      - hadoop_network
+    command: "/bin/bash -c 'sleep 130 && /usr/local/bin/start-hadoop.sh && tail -f /dev/null'"
+
+  datanode2:
+    image: mon_hadoop
+    container_name: datanode2
+    hostname: datanode2
+    ports:
+      - "9865:9864" # Web interface du DataNode
+      - "9867:9866" # Port de communication avec le DataNode
+    volumes:
+      - hadoop_datanode2:/usr/local/hadoop/hdfs/datanode
+    depends_on:
+      - namenode
+    networks:
+      - hadoop_network
+    command: "/bin/bash -c 'sleep 130 && /usr/local/bin/start-hadoop.sh && tail -f /dev/null'"
+
+  nodemanager:
+    image: mon_hadoop
+    container_name: nodemanager
+    hostname: nodemanager
+    volumes:
+      - hadoop_nodemanager:/usr/local/hadoop/logs
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    networks:
+      - hadoop_network
+    command: "/bin/bash -c '/usr/local/bin/start-yarn.sh && tail -f /dev/null'"
+
+  resourcemanager:
+    image: mon_hadoop
+    container_name: resourcemanager
+    hostname: resourcemanager
+    ports:
+      - "8090:8088"
+    networks:
+      - hadoop_network
+    command: "/bin/bash -c 'sleep 130 && /usr/local/bin/start-hadoop.sh && tail -f /dev/null'"
+
+networks:
+  hadoop_network:
+    driver: bridge
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_nodemanager:
